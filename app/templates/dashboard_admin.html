@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Administrador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row mb-3">
+            <div class="col">
+                <h1 class="text-orange">Bienvenido, {{ user.usuario }} (Admin)</h1>
+            </div>
+            <div class="col text-end">
+                <a href="{{ url_for('main.logout') }}" class="btn btn-danger">Cerrar sesión</a>
+            </div>
+        </div>
+
+        <h2 class="mb-4 text-center">Registros de Acceso</h2>
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-12 col-md-3">
+                <label class="form-label">Número de registros</label>
+                <input type="number" name="limite" class="form-control" value="{{ request.args.get('limite', 10) }}">
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Aula</label>
+                <select name="aula_id" class="form-select">
+                    <option value="">Todas</option>
+                    {% for aula in aulas %}
+                        <option value="{{ aula.id }}" {% if request.args.get('aula_id') == aula.id|string %}selected{% endif %}>
+                            {{ aula.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Usuario</label>
+                <select name="usuario_id" class="form-select">
+                    <option value="">Todos</option>
+                    {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}" {% if request.args.get('usuario_id') == usuario.id|string %}selected{% endif %}>
+                            {{ usuario.usuario }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+        </form>
+
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Aula</th>
+                <th>Capacidad</th>
+                <th>Accedido</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for registro in accesos %}
+                <tr>
+                    <td>{{ registro.user.usuario }}</td>
+                    <td>{{ registro.user.email }}</td>
+                    <td>{{ registro.clase.nombre }}</td>
+                    <td>{{ registro.clase.capacidad }}</td>
+                    <td>{{ registro.accedido.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <hr>
+        <h2 class="mb-4 text-center">Usuarios</h2>
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-12 col-md-3">
+                <label class="form-label">Número de registros</label>
+                <input type="number" name="limite_usuarios" class="form-control" value="{{ request.args.get('limite_usuarios', 10) }}">
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Usuario</label>
+                <select name="usuario_filtro" class="form-select">
+                    <option value="">Todos</option>
+                    {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}" {% if request.args.get('usuario_filtro') == usuario.id|string %}selected{% endif %}>
+                            {{ usuario.usuario }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-6 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+        </form>
+
+        <table class="table table-striped text-center">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Usuario</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>NFC UID</th>
+                <th>Fecha de Creación</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for usuario in usuarios %}
+                {% if request.args.get('usuario_filtro') == '' or request.args.get('usuario_filtro') == usuario.id|string %}
+                    <tr>
+                        <td>{{ usuario.id }}</td>
+                        <td>{{ usuario.usuario }}</td>
+                        <td>{{ usuario.email }}</td>
+                        <td>{{ usuario.rol }}</td>
+                        <td>{{ usuario.nfc_uid }}</td>
+                        <td>{{ usuario.usuario_creado.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <hr>
+        <h2 class="mb-4 text-center">Aulas</h2>
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-12 col-md-3">
+                <label class="form-label">Número de registros</label>
+                <input type="number" name="limite_clases" class="form-control" value="{{ request.args.get('limite_clases', 10) }}">
+            </div>
+            <div class="col-12 col-md-3">
+                <label class="form-label">Aula</label>
+                <select name="clase_filtro" class="form-select">
+                    <option value="">Todas</option>
+                    {% for aula in aulas %}
+                        <option value="{{ aula.id }}" {% if request.args.get('clase_filtro') == aula.id|string %}selected{% endif %}>
+                            {{ aula.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-6 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+        </form>
+
+        <table class="table table-striped text-center">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Capacidad</th>
+                <th>Descripción</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for aula in aulas %}
+                {% if request.args.get('clase_filtro') == '' or request.args.get('clase_filtro') == aula.id|string %}
+                    <tr>
+                        <td>{{ aula.id }}</td>
+                        <td>{{ aula.nombre }}</td>
+                        <td>{{ aula.capacidad }}</td>
+                        <td>{{ aula.descripcion }}</td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <hr>
+
+        <h3 class="mt-5">Añadir Usuario</h3>
+        <form method="post" class="row g-3">
+            <input type="hidden" name="add_user">
+            <div class="col-md-2">
+                <input name="usuario" class="form-control" placeholder="Usuario" required>
+            </div>
+            <div class="col-md-2">
+                <input name="email" class="form-control" placeholder="Email" required>
+            </div>
+            <div class="col-md-2">
+                <input name="password" type="password" class="form-control" placeholder="Contraseña" required>
+            </div>
+            <div class="col-md-2">
+                <input name="nfc_uid" class="form-control" placeholder="Número NFC" required>
+            </div>
+            <div class="col-md-2">
+                <select name="rol" class="form-select" required>
+                    <option value="profesor">Profesor</option>
+                    <option value="admin">Administrador</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">Añadir</button>
+            </div>
+        </form>
+
+        <h3 class="mt-5">Eliminar Usuario</h3>
+        <form method="post" class="row g-3">
+            <input type="hidden" name="form_type" value="delete_user">
+            <div class="col-md-4">
+                <select name="delete_user_id" class="form-select" required>
+                    {% for usuario in usuarios %}
+                        {% if usuario.id != user.id %}
+                            <option value="{{ usuario.id }}">{{ usuario.usuario }} ({{ usuario.email }})</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+            </div>
+        </form>
+
+        <h3 class="mt-5">Añadir Aula</h3>
+        <form method="post" class="row g-3">
+            <input type="hidden" name="add_aula">
+            <div class="col-md-3">
+                <input name="nombre" class="form-control" placeholder="Nombre del aula" required>
+            </div>
+            <div class="col-md-2">
+                <input name="capacidad" type="number" class="form-control" placeholder="Capacidad" required>
+            </div>
+            <div class="col-md-4">
+                <input name="descripcion" class="form-control" placeholder="Descripción del aula">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">Añadir</button>
+            </div>
+        </form>
+        
+
+        <h3 class="mt-5">Eliminar Aula</h3>
+        <form method="post" class="row g-3">
+            <input type="hidden" name="form_type" value="delete_aula">
+            <div class="col-md-4">
+                <select name="delete_aula_id" class="form-select" required>
+                    {% for aula in aulas %}
+                        <option value="{{ aula.id }}">{{ aula.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+            </div>
+        </form>
+
+    </div>
+    <br><br>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
