@@ -1,15 +1,15 @@
 from app import create_app
-from app.models import db, User, Clase, Acceso
+from app.models import db, User, Clase, Acceso, Reserva  # Asegúrate de importar Reserva
 from werkzeug.security import generate_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = create_app()
 
 with app.app_context():
-    db.drop_all()  # Limpia la base de datos anterior
+    db.drop_all()
     db.create_all()
 
-    # Crear usuarios con contraseñas cifradas
+    # Crear usuarios
     user1 = User(
         usuario='juan',
         email='juan@example.com',
@@ -30,7 +30,6 @@ with app.app_context():
     clase1 = Clase(nombre='Aula 101', capacidad=30, descripcion='Laboratorio de informática')
     clase2 = Clase(nombre='Aula 202', capacidad=25, descripcion='Sala de reuniones')
 
-    # Guardar usuarios y clases
     db.session.add_all([user1, user2, clase1, clase2])
     db.session.commit()
 
@@ -41,4 +40,11 @@ with app.app_context():
     db.session.add_all([acceso1, acceso2])
     db.session.commit()
 
-    print("Datos de prueba insertados con contraseñas encriptadas y NFC.")
+    # Crear reservas
+    reserva1 = Reserva(user_id=user1.id, clase_id=clase1.id, fecha_reserva=datetime.now() + timedelta(days=1))
+    reserva2 = Reserva(user_id=user2.id, clase_id=clase2.id, fecha_reserva=datetime.now() + timedelta(days=1, hours=1))
+
+    db.session.add_all([reserva1, reserva2])
+    db.session.commit()
+
+    print("Datos de prueba insertados con accesos y reservas.")
