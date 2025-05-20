@@ -3,10 +3,9 @@ import board
 import busio
 import sqlite3
 import pytz
-import RPi.GPIO as GPIO
+import digitalio
 from datetime import datetime
 from adafruit_pn532.i2c import PN532_I2C
-
 
 i2c = busio.I2C(board.SCL, board.SDA)
 pn532 = PN532_I2C(i2c, debug=False)
@@ -14,15 +13,11 @@ pn532.SAM_configuration()
 
 print("Esperando una tarjeta NFC...")
 
+LED_VERDE = digitalio.DigitalInOut(board.D12)
+LED_VERDE.direction = digitalio.Direction.OUTPUT
 
-GPIO.setmode(GPIO.BOARD)
-
-LED_VERDE = 12
-LED_ROJO = 16
-
-GPIO.setup(LED_VERDE, GPIO.OUT)
-GPIO.setup(LED_ROJO, GPIO.OUT)
-
+LED_ROJO = digitalio.DigitalInOut(board.D16)
+LED_ROJO.direction = digitalio.Direction.OUTPUT
 
 db_path = "../gaiteapp/instance/data.db"
 CLASE_ID = 1
@@ -37,7 +32,8 @@ def registrar_acceso(user_id):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         ahora = tiempo_españa()
-        cursor.execute("""INSERT INTO accesos (user_id, clase_id, accedido) VALUES (?, ?, ?) """, (user_id, CLASE_ID, ahora))
+        cursor.execute("""INSERT INTO accesos (user_id, clase_id, accedido) VALUES (?, ?, ?) """,
+                       (user_id, CLASE_ID, ahora))
         conn.commit()
         conn.close()
         print(f"Acceso registrado a las {ahora.strftime('%H:%M:%S')}")
@@ -74,16 +70,18 @@ try:
 
             acceso = comprobar_uid(uid_str)
 
-            GPIO.output(LED_VERDE, GPIO.HIGH if acceso else GPIO.LOW)
-            GPIO.output(LED_ROJO, GPIO.LOW if acceso else GPIO.HIGH)
+            LED_VERDE.value = acceso
+            LED_ROJO.value = not acceso
 
             time.sleep(3)
-            GPIO.output(LED_VERDE, GPIO.LOW)
-            GPIO.output(LED_ROJO, GPIO.LOW)
+
+            LED_VERDE.value = False
+            LED_ROJO.value = False
 
             time.sleep(1)
 
 except KeyboardInterrupt:
-    print("\n Programa interrumpido por el usuario.")
+    print("\nPrograma interrumpido por el usuario.")
 finally:
-    GPIO.cleanup()
+    LED_VERDE.value = False
+    LED_ROJO.value = False
