@@ -117,10 +117,9 @@
                     <td>{{ usuario.nfc_uid }}</td>
                     <td>{{ usuario.usuario_creado.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                     <td>
-                        <form method="post" style="display:inline-block;">
-                            <input type="hidden" name="delete_user_id" value="{{ usuario.id }}">
-                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                        </form>
+                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmarEliminarUsuarioModal" data-user-id="{{ usuario.id }}">
+                            Eliminar
+                        </button>
                     </td>
                 </tr>
             {% else %}
@@ -170,9 +169,11 @@
                     <td>{{ aula.capacidad }}</td>
                     <td>{{ aula.descripcion }}</td>
                     <td>
-                        <form method="post" style="display:inline-block;">
+                        <form method="post" style="display:inline-block;" onsubmit="return confirm('¿Estás seguro de eliminar este aula?');">
                             <input type="hidden" name="delete_aula_id" value="{{ aula.id }}">
-                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmarEliminarAulaModal" data-aula-id="{{ aula.id }}"> 
+                                Eliminar 
+                            </button>
                         </form>
                     </td>
                 </tr>
@@ -185,11 +186,11 @@
         <hr>
         <h2 class="mb-4 text-center">Reservas</h2>
         <form method="get" class="row g-3 mb-4">
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label class="form-label">Número de registros</label>
                 <input type="number" name="limite_reservas" class="form-control" value="{{ request.args.get('limite_reservas', 10) }}">
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label class="form-label">Aula</label>
                 <select name="reserva_aula_id" class="form-select">
                     <option value="">Todas</option>
@@ -200,7 +201,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label class="form-label">Usuario</label>
                 <select name="reserva_usuario_id" class="form-select">
                     <option value="">Todos</option>
@@ -211,34 +212,48 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-12 col-md-3 d-flex align-items-end">
+            <div class="col-12 col-md-2">
+                <label class="form-label">Fecha desde</label>
+                <input type="date" name="fecha_reserva_desde" class="form-control" value="{{ request.args.get('fecha_reserva_desde', '') }}">
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label">Fecha hasta</label>
+                <input type="date" name="fecha_reserva_hasta" class="form-control" value="{{ request.args.get('fecha_reserva_hasta', '') }}">
+            </div>
+            <div class="col-12 col-md-2 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">Filtrar</button>
             </div>
         </form>
 
         <table class="table table-striped">
             <thead>
-            <tr>
-                <th>Usuario</th>
-                <th>Aula</th>
-                <th>Fecha Reserva</th>
-                <th>Acción</th>
-            </tr>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Aula</th>
+                    <th>Fecha Reserva Desde</th>
+                    <th>Fecha Reserva Hasta</th>
+                    <th>Acción</th>
+                </tr>
             </thead>
             <tbody>
-            {% for reserva in reservas %}
-                <tr>
-                    <td>{{ reserva.user.usuario }}</td>
-                    <td>{{ reserva.clase.nombre }}</td>
-                    <td>{{ reserva.fecha_reserva.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                    <td>
-                    <form method="post" action="{{ url_for('main.dashboard') }}" style="display:inline-block;">
-                        <input type="hidden" name="delete_reserva_id" value="{{ reserva.id }}">
-                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                    </form>
-                    </td>
-                </tr>
-            {% endfor %}
+                {% for reserva in reservas %}
+                    <tr>
+                        <td>{{ reserva.user.usuario }}</td>
+                        <td>{{ reserva.clase.nombre }}</td>
+                        <td>{{ reserva.fecha_reserva_desde.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ reserva.fecha_reserva_hasta.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <form method="post" action="{{ url_for('main.dashboard') }}" style="display:inline-block;" onsubmit="return confirm('¿Estás seguro de eliminar esta reserva?');">
+                                <input type="hidden" name="delete_reserva_id" value="{{ reserva.id }}">
+                                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmarEliminarModal" data-id="{{ reserva.id }}">
+                                    Eliminar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="5" class="text-center">No hay reservas.</td></tr>
+                {% endfor %}
             </tbody>
         </table>
 
@@ -279,7 +294,7 @@
             <div class="col-md-2">
                 <input name="capacidad" type="number" class="form-control" placeholder="Capacidad" required>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-5">
                 <input name="descripcion" class="form-control" placeholder="Descripción del aula">
             </div>
             <div class="col-md-2">
@@ -288,6 +303,99 @@
         </form>
     </div>
     <br><br>
+    <div class="modal fade" id="confirmarEliminarUsuarioModal" tabindex="-1" aria-labelledby="eliminarUsuarioLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" action="{{ url_for('main.dashboard') }}">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="eliminarUsuarioLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar este usuario? <br>Se eliminarán también sus reservas y accesos.
+                </div>
+                <div class="modal-footer">
+                <input type="hidden" name="delete_user_id" id="userIdInput">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmarEliminarAulaModal" tabindex="-1" aria-labelledby="eliminarAulaLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" action="{{ url_for('main.dashboard') }}">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="eliminarAulaLabel">Confirmar eliminación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        ¿Estás seguro de que deseas eliminar este aula? <br>Se eliminarán también sus reservas y accesos.
+                    </div>
+                    <div class="modal-footer">
+                        <input type="hidden" name="delete_aula_id" id="aulaIdInput">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmarEliminarModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" action="{{ url_for('main.dashboard') }}">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar esta reserva?
+                </div>
+                <div class="modal-footer">
+                <input type="hidden" name="delete_reserva_id" id="reservaIdInput">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const userModal = document.getElementById('confirmarEliminarUsuarioModal');
+        userModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const userId = button.getAttribute('data-user-id');
+            const input = userModal.querySelector('#userIdInput');
+            input.value = userId;
+        });
+    </script>
+
+    <script>
+        const aulaModal = document.getElementById('confirmarEliminarAulaModal');
+        aulaModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const aulaId = button.getAttribute('data-aula-id');
+            const input = aulaModal.querySelector('#aulaIdInput');
+            input.value = aulaId;
+        });
+    </script>
+
+    <script>
+        const confirmarModal = document.getElementById('confirmarEliminarModal');
+        confirmarModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const reservaId = button.getAttribute('data-id');
+            const input = confirmarModal.querySelector('#reservaIdInput');
+            input.value = reservaId;
+        });
+    </script>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

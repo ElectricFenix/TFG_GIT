@@ -2,6 +2,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from werkzeug.security import check_password_hash, generate_password_hash
 from .models import Acceso, User, Clase, Reserva, db
 from datetime import datetime
+import pytz
+
+zona_es = pytz.timezone('Europe/Madrid')
 
 
 main = Blueprint('main', __name__)
@@ -30,6 +33,8 @@ def logout():
     session.pop('user_id', None)
     return redirect(url_for('main.login'))
 
+from datetime import datetime
+
 @main.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     user_id = session.get('user_id')
@@ -38,14 +43,17 @@ def dashboard():
 
     user = User.query.get(user_id)
 
-    # Filtros para accesos
+    # Otros filtros para accesos, usuarios, aulas... (sin cambios)
     limite = request.args.get('limite', default=10, type=int)
     aula_id = request.args.get('aula_id', type=int)
     usuario_id = request.args.get('usuario_id', type=int)
 
-    # Filtros para reservas
-    reserva_usuario_id = request.args.get('reserva_usuario_id', type=int)
+    # --- Cambios en filtros para reservas ---
+    limite_reservas = request.args.get('limite_reservas', default=10, type=int)
+    fecha_reserva_desde_str = request.args.get('fecha_reserva_desde')
+    fecha_reserva_hasta_str = request.args.get('fecha_reserva_hasta')
     reserva_aula_id = request.args.get('reserva_aula_id', type=int)
+    reserva_usuario_id = request.args.get('reserva_usuario_id', type=int)
 
     # Filtros para usuarios
     usuario_filtro = request.args.get('usuario_filtro', type=int)
@@ -58,7 +66,7 @@ def dashboard():
     aulas = Clase.query.all()
     usuarios = User.query.all()
 
-    # Consulta de accesos
+    # Consulta de accesos (igual)
     query = db.session.query(Acceso)
     if aula_id:
         query = query.filter(Acceso.clase_id == aula_id)
@@ -66,21 +74,39 @@ def dashboard():
         query = query.filter(Acceso.user_id == usuario_id)
     registros = query.order_by(Acceso.accedido.desc()).limit(limite).all()
 
-    # Consulta de reservas
+    # Consulta de reservas con filtros y rango de fechas
     reserva_query = db.session.query(Reserva)
+
     if reserva_usuario_id:
         reserva_query = reserva_query.filter(Reserva.user_id == reserva_usuario_id)
     if reserva_aula_id:
         reserva_query = reserva_query.filter(Reserva.clase_id == reserva_aula_id)
-    reservas = reserva_query.order_by(Reserva.fecha_reserva.desc()).all()
 
-    # Filtro de usuarios para mostrar en la tabla
+    # Filtrar rango de fechas: reservas cuyo inicio está dentro del rango indicado
+    if fecha_reserva_desde_str:
+        try:
+            reserva_desde = datetime.strptime(fecha_reserva_desde_str, '%Y-%m-%d')
+            reserva_query = reserva_query.filter(Reserva.fecha_reserva_desde >= reserva_desde)
+        except ValueError:
+            pass
+
+    if fecha_reserva_hasta_str:
+        try:
+            reserva_hasta = datetime.strptime(fecha_reserva_hasta_str, '%Y-%m-%d')
+            reserva_query = reserva_query.filter(Reserva.fecha_reserva_desde <= reserva_hasta)
+        except ValueError:
+            pass
+
+    # Limitar el número de reservas mostradas
+    reservas = reserva_query.order_by(Reserva.fecha_reserva_desde.desc()).limit(limite_reservas).all()
+
+    # Filtro de usuarios para mostrar en la tabla (igual)
     usuarios_query = db.session.query(User)
     if usuario_filtro:
         usuarios_query = usuarios_query.filter(User.id == usuario_filtro)
     usuarios_mostrar = usuarios_query.order_by(User.usuario).limit(limite_usuarios).all()
 
-    # Filtro de aulas para mostrar en la tabla
+    # Filtro de aulas para mostrar en la tabla (igual)
     aulas_query = db.session.query(Clase)
     if clase_filtro:
         aulas_query = aulas_query.filter(Clase.id == clase_filtro)
@@ -127,7 +153,7 @@ def dashboard():
                     db.session.delete(aula_borrar)
                     db.session.commit()
                     flash('¡Aula eliminada correctamente!', 'danger')
-            
+
             elif 'delete_reserva_id' in request.form:
                 reserva_id = request.form['delete_reserva_id']
                 reserva = Reserva.query.get(reserva_id)
@@ -139,15 +165,29 @@ def dashboard():
         # Cualquier usuario puede hacer reservas
         if 'make_reservation' in request.form:
             aula_id = request.form.get('reserva_aula_id')
-            fecha_reserva_str = request.form.get('fecha_reserva')
-            try:
-                fecha_reserva = datetime.strptime(fecha_reserva_str, '%Y-%m-%dT%H:%M')
-                nueva_reserva = Reserva(user_id=user.id, clase_id=aula_id, fecha_reserva=fecha_reserva)
+            fecha_desde_str = request.form.get('fecha_reserva_desde')
+            fecha_hasta_str = request.form.get('fecha_reserva_hasta')
+
+            fecha_desde = datetime.strptime(fecha_desde_str, '%Y-%m-%dT%H:%M').replace(tzinfo=zona_es)
+            fecha_hasta = datetime.strptime(fecha_hasta_str, '%Y-%m-%dT%H:%M').replace(tzinfo=zona_es)
+            ahora = datetime.now(zona_es)
+
+            if fecha_desde <= ahora:
+                flash('La fecha/hora de inicio debe ser en el futuro.', 'warning')
+
+            elif fecha_desde >= fecha_hasta:
+                flash('La fecha/hora de inicio debe ser anterior a la de fin.', 'warning')
+
+            else:
+                nueva_reserva = Reserva(
+                    user_id=user.id,
+                    clase_id=aula_id,
+                    fecha_reserva_desde=fecha_desde,
+                    fecha_reserva_hasta=fecha_hasta
+                )
                 db.session.add(nueva_reserva)
                 db.session.commit()
                 flash('¡Reserva creada con éxito!', 'success')
-            except Exception as e:
-                flash(f'Error al crear la reserva: {str(e)}', 'danger')
 
         # Eliminar una reserva propia
         if 'delete_reserva_id' in request.form:
@@ -183,3 +223,4 @@ def dashboard():
         usuarios=usuarios,
         reservas=reservas
     )
+

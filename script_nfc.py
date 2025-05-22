@@ -16,7 +16,7 @@ print("Esperando una tarjeta NFC...")
 LED_VERDE = digitalio.DigitalInOut(board.D12)
 LED_VERDE.direction = digitalio.Direction.OUTPUT
 
-LED_ROJO = digitalio.DigitalInOut(board.D16)
+LED_ROJO = digitalio.DigitalInOut(board.D23)
 LED_ROJO.direction = digitalio.Direction.OUTPUT
 
 db_path = "../gaiteapp/instance/data.db"

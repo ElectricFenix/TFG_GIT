@@ -40,11 +40,4 @@ with app.app_context():
     db.session.add_all([acceso1, acceso2])
     db.session.commit()
 
-    # Crear reservas
-    reserva1 = Reserva(user_id=user1.id, clase_id=clase1.id, fecha_reserva=datetime.now() + timedelta(days=1))
-    reserva2 = Reserva(user_id=user2.id, clase_id=clase2.id, fecha_reserva=datetime.now() + timedelta(days=1, hours=1))
-
-    db.session.add_all([reserva1, reserva2])
-    db.session.commit()
-
     print("Datos de prueba insertados con accesos y reservas.")

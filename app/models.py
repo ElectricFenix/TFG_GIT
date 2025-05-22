@@ -21,7 +21,8 @@ class User(db.Model):
     usuario_creado = db.Column(db.DateTime, default=tiempo_españa)
 
     accesos = db.relationship('Acceso', back_populates='user', cascade='all, delete-orphan')
-
+    reservas = db.relationship('Reserva', back_populates='user', cascade='all, delete-orphan')
+    
 
 class Clase(db.Model):
     __tablename__ = 'clase'
@@ -31,7 +32,8 @@ class Clase(db.Model):
     descripcion = db.Column(db.Text)
 
     accesos = db.relationship('Acceso', back_populates='clase', cascade='all, delete-orphan')
-
+    reservas = db.relationship('Reserva', back_populates='clase', cascade='all, delete-orphan')
+    
 
 class Acceso(db.Model):
     __tablename__ = 'accesos'
@@ -48,13 +50,15 @@ class Reserva(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     clase_id = db.Column(db.Integer, db.ForeignKey('clase.id'), nullable=False)
-    fecha_reserva = db.Column(db.DateTime, nullable=False)
+    fecha_reserva_desde = db.Column(db.DateTime, nullable=False)
+    fecha_reserva_hasta = db.Column(db.DateTime, nullable=False)
     creada_en = db.Column(db.DateTime, default=tiempo_españa)
 
-    user = db.relationship('User', backref='reservas')
-    clase = db.relationship('Clase', backref='reservas')
+    user = db.relationship('User', back_populates='reservas')
+    clase = db.relationship('Clase', back_populates='reservas')
 
     __table_args__ = (
-        db.UniqueConstraint('clase_id', 'fecha_reserva', name='unique_clase_fecha'),
+        db.UniqueConstraint('clase_id', 'fecha_reserva_desde', 'fecha_reserva_hasta', name='unique_clase_rango'),
     )
+
 
