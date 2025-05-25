@@ -141,7 +141,7 @@ def dashboard():
                 if usuario_borrar and usuario_borrar.id != user.id:
                     db.session.delete(usuario_borrar)
                     db.session.commit()
-                    flash('¡Usuario eliminado correctamente!', 'danger')
+                    flash('¡Usuario eliminado correctamente!', 'sucess')
 
             elif 'delete_aula_id' in request.form:
                 id_aula = request.form['delete_aula_id']
@@ -149,7 +149,7 @@ def dashboard():
                 if aula_borrar:
                     db.session.delete(aula_borrar)
                     db.session.commit()
-                    flash('¡Aula eliminada correctamente!', 'danger')
+                    flash('¡Aula eliminada correctamente!', 'sucess')
 
             elif 'delete_reserva_id' in request.form:
                 reserva_id = request.form['delete_reserva_id']
