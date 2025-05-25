@@ -7,6 +7,18 @@
 </head>
 <body class="bg-light">
     <div class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         <div class="row mb-3">
             <div class="col">
                 <h1 class="text-orange">Bienvenido, {{ user.usuario }} (Admin)</h1>
@@ -66,7 +78,7 @@
                     <td>{{ registro.user.email }}</td>
                     <td>{{ registro.clase.nombre }}</td>
                     <td>{{ registro.clase.capacidad }}</td>
-                    <td>{{ registro.accedido.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ registro.accedido.strftime('%d-%m-%Y %H:%M:%S') }}</td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -115,7 +127,7 @@
                     <td>{{ usuario.email }}</td>
                     <td>{{ usuario.rol }}</td>
                     <td>{{ usuario.nfc_uid }}</td>
-                    <td>{{ usuario.usuario_creado.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    <td>{{ usuario.usuario_creado.strftime('%d-%m-%Y %H:%M:%S') }}</td>
                     <td>
                         <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmarEliminarUsuarioModal" data-user-id="{{ usuario.id }}">
                             Eliminar
@@ -240,8 +252,8 @@
                     <tr>
                         <td>{{ reserva.user.usuario }}</td>
                         <td>{{ reserva.clase.nombre }}</td>
-                        <td>{{ reserva.fecha_reserva_desde.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                        <td>{{ reserva.fecha_reserva_hasta.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>{{ reserva.fecha_reserva_desde.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                        <td>{{ reserva.fecha_reserva_hasta.strftime('%d-%m-%Y %H:%M:%S') }}</td>
                         <td>
                             <form method="post" action="{{ url_for('main.dashboard') }}" style="display:inline-block;" onsubmit="return confirm('¿Estás seguro de eliminar esta reserva?');">
                                 <input type="hidden" name="delete_reserva_id" value="{{ reserva.id }}">
@@ -256,8 +268,33 @@
                 {% endfor %}
             </tbody>
         </table>
+        <hr>
+        <h2 class="mb-4 text-center mt-5">Reservar Aula</h2>
 
-
+        <form method="post" action="{{ url_for('main.dashboard') }}" class="row g-3 mb-4">
+            <input type="hidden" name="make_reservation" value="1">
+            <div class="col-md-4">
+                <label class="form-label">Aula</label>
+                <select name="reserva_aula_id" class="form-select" required>
+                    <option value="" disabled selected>Seleccione un aula</option>
+                    {% for aula in aulas %}
+                        <option value="{{ aula.id }}">{{ aula.nombre }} (Capacidad: {{ aula.capacidad }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha y hora de inicio</label>
+                <input type="datetime-local" name="fecha_reserva_desde" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha y hora de fin</label>
+                <input type="datetime-local" name="fecha_reserva_hasta" class="form-control" required>
+            </div>
+            <div class="col-12 d-flex justify-content-center">
+                <button type="submit" class="btn btn-success w-100">Reservar</button>
+            </div>
+        </form>
+        
         <hr>
         <h3 class="mt-5">Añadir Usuario</h3>
         <form method="post" class="row g-3">
@@ -395,7 +432,23 @@
             input.value = reservaId;
         });
     </script>
-    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const alerts = document.querySelectorAll('.alert-dismissible');
+
+            alerts.forEach((alert) => {
+            setTimeout(() => {
+                alert.classList.remove('show');
+                alert.classList.add('fade');
+                
+                setTimeout(() => {
+                alert.remove();
+                }, 150);
+            }, 5000);
+            });
+        });
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
