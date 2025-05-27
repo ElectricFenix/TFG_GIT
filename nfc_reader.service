@@ -1,0 +1,14 @@
+[Unit]
+Description=Lector NFC
+After=network.target
+
+[Service]
+User=electric
+Group=electric
+WorkingDirectory=/home/electric/nfc
+Environment="PATH=/home/electric/nfc//myenv/bin"
+ExecStart=/home/electric/nfc/myenv/bin/python script_nfc.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

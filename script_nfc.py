@@ -13,10 +13,10 @@ pn532.SAM_configuration()
 
 print("Esperando una tarjeta NFC...")
 
-LED_VERDE = digitalio.DigitalInOut(board.D12)
+LED_VERDE = digitalio.DigitalInOut(board.D23)
 LED_VERDE.direction = digitalio.Direction.OUTPUT
 
-LED_ROJO = digitalio.DigitalInOut(board.D23)
+LED_ROJO = digitalio.DigitalInOut(board.D12)
 LED_ROJO.direction = digitalio.Direction.OUTPUT
 
 db_path = "../gaiteapp/instance/data.db"
@@ -44,7 +44,7 @@ def comprobar_uid(uid_str):
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT id, usuario FROM usuario WHERE nfc_uid = ?", (uid_str,))
+        cursor.execute("SELECT id, usuario FROM users WHERE nfc_uid = ?", (uid_str,))
         usuario = cursor.fetchone()
         conn.close()
 

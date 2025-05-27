@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div class="row mb-3">
+            <div class="col">
+                <h1 class="text-orange">Bienvenido, {{ user.usuario }}</h1>
+            </div>
+            <div class="col text-end">
+                <a href="{{ url_for('main.logout') }}" class="btn btn-danger">Cerrar sesión</a>
+            </div>
+        </div>
+
+        <h2 class="mb-4 text-center">Registros de Acceso</h2>
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label class="form-label">Número de registros</label>
+                <input type="number" name="limite" class="form-control" value="{{ request.args.get('limite', 10) }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Aula</label>
+                <select name="aula_id" class="form-select">
+                    <option value="">Todas</option>
+                    {% for aula in aulas %}
+                        <option value="{{ aula.id }}" {% if request.args.get('aula_id') == aula.id|string %}selected{% endif %}>
+                            {{ aula.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Usuario</label>
+                <select name="usuario_id" class="form-select">
+                    <option value="">Todos</option>
+                    {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}" {% if request.args.get('usuario_id') == usuario.id|string %}selected{% endif %}>
+                            {{ usuario.usuario }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+        </form>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Aula</th>
+                    <th>Capacidad</th>
+                    <th>Accedido</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in accesos %}
+                    <tr>
+                        <td>{{ registro.user.usuario }}</td>
+                        <td>{{ registro.user.email }}</td>
+                        <td>{{ registro.clase.nombre }}</td>
+                        <td>{{ registro.clase.capacidad }}</td>
+                        <td>{{ registro.accedido.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2 class="mb-4 text-center mt-5">Reservas de Aulas</h2>
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-12 col-md-2">
+                <label class="form-label">Número de registros</label>
+                <input type="number" name="limite_reservas" class="form-control" value="{{ request.args.get('limite_reservas', 10) }}">
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label">Aula</label>
+                <select name="reserva_aula_id" class="form-select">
+                    <option value="">Todas</option>
+                    {% for aula in aulas %}
+                        <option value="{{ aula.id }}" {% if request.args.get('reserva_aula_id') == aula.id|string %}selected{% endif %}>
+                            {{ aula.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label">Usuario</label>
+                <select name="reserva_usuario_id" class="form-select">
+                    <option value="">Todos</option>
+                    {% for usuario in usuarios %}
+                        <option value="{{ usuario.id }}" {% if request.args.get('reserva_usuario_id') == usuario.id|string %}selected{% endif %}>
+                            {{ usuario.usuario }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label">Fecha desde</label>
+                <input type="date" name="fecha_reserva_desde" class="form-control" value="{{ request.args.get('fecha_reserva_desde', '') }}">
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label">Fecha hasta</label>
+                <input type="date" name="fecha_reserva_hasta" class="form-control" value="{{ request.args.get('fecha_reserva_hasta', '') }}">
+            </div>
+            <div class="col-12 col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+            </div>
+        </form>
+
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Aula</th>
+                    <th>Rango de Reserva</th>
+                    <th>Creada en</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reserva in reservas %}
+                    <tr>
+                        <td>{{ reserva.user.usuario }}</td>
+                        <td>{{ reserva.user.email }}</td>
+                        <td>{{ reserva.clase.nombre }}</td>
+                        <td>
+                            {{ reserva.fecha_reserva_desde.strftime('%d-%m-%Y %H:%M') }}
+                            &nbsp;→&nbsp;
+                            {{ reserva.fecha_reserva_hasta.strftime('%d-%m-%Y %H:%M') }}
+                        </td>
+                        <td>{{ reserva.creada_en.strftime('%d-%m-%Y %H:%M:%S') }}</td>
+                        <td>
+                            {% if reserva.user_id == user.id %}
+                                <form method="post" action="{{ url_for('main.dashboard') }}" style="display:inline;">
+                                    <input type="hidden" name="delete_reserva_id" value="{{ reserva.id }}">
+                                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmarEliminarModal" data-id="{{ reserva.id }}">
+                                        Eliminar
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-muted">Sin permiso</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">No hay reservas para mostrar.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h2 class="mb-4 text-center mt-5">Reservar Aula</h2>
+
+        <form method="post" action="{{ url_for('main.dashboard') }}" class="row g-3 mb-4">
+            <input type="hidden" name="make_reservation" value="1">
+            <div class="col-md-4">
+                <label class="form-label">Aula</label>
+                <select name="reserva_aula_id" class="form-select" required>
+                    <option value="" disabled selected>Seleccione un aula</option>
+                    {% for aula in aulas %}
+                        <option value="{{ aula.id }}">{{ aula.nombre }} (Capacidad: {{ aula.capacidad }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha y hora de inicio</label>
+                <input type="datetime-local" name="fecha_reserva_desde" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha y hora de fin</label>
+                <input type="datetime-local" name="fecha_reserva_hasta" class="form-control" required>
+            </div>
+            <div class="col-12 d-flex justify-content-center">
+                <button type="submit" class="btn btn-success w-100">Reservar</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="modal fade" id="confirmarEliminarModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="post" action="{{ url_for('main.dashboard') }}">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Confirmar eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                ¿Estás seguro de que deseas eliminar esta reserva?
+                </div>
+                <div class="modal-footer">
+                <input type="hidden" name="delete_reserva_id" id="reservaIdInput">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        const confirmarModal = document.getElementById('confirmarEliminarModal');
+        confirmarModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const reservaId = button.getAttribute('data-id');
+            const input = confirmarModal.querySelector('#reservaIdInput');
+            input.value = reservaId;
+        });
+    </script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const alerts = document.querySelectorAll('.alert-dismissible');
+
+            alerts.forEach((alert) => {
+            setTimeout(() => {
+                alert.classList.remove('show');
+                alert.classList.add('fade');
+                
+                setTimeout(() => {
+                alert.remove();
+                }, 150);
+            }, 5000);
+            });
+        });
+    </script>
+
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+<br><br>
+</html>
